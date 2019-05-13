@@ -3,10 +3,11 @@ import socket
 import argparse
 from aiofile import AIOFile
 from datetime import datetime
+import os
 
 DEFAULT_HOST = 'minechat.dvmn.org'
 DEFAULT_PORT = 5000
-DEFAULT_OUTPUT_FILE_PATH = 'history'
+DEFAULT_HISTORY_FILE_PATH = 'history'
 DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES = 3
 
 
@@ -60,17 +61,19 @@ async def main():
                         default=DEFAULT_PORT,
                         help='port')
     parser.add_argument('--history',
-                        default=DEFAULT_OUTPUT_FILE_PATH,
+                        default=DEFAULT_HISTORY_FILE_PATH,
                         help='path to file with history')
     parser.add_argument('--delay',
                         type=float,
                         default=DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES,
                         help='delay between connect retries')
     args = parser.parse_args()
-    host = args.host
-    port = args.port
-    history_file_path = args.history
-    delay = args.delay
+    host = args.host or os.getenv('HOST') or DEFAULT_HOST
+    port = args.port or os.getenv('PORT') or DEFAULT_PORT
+    history_file_path = (args.history or os.getenv('HISTORY')
+                         or DEFAULT_HISTORY_FILE_PATH)
+    delay = (args.delay or os.getenv('DELAY')
+             or DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES)
     messages_reader = read_chat_messages(host, port, delay)
     await save_messages_to_file(messages_reader, history_file_path)
 

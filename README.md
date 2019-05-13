@@ -23,3 +23,15 @@ optional arguments:
   --delay DELAY      delay between connect retries
 
 ```
+
+You also can set environment variables:
+
+```bash
+
+$ export HOST=minechat.dvmn.org
+$ export PORT=5000
+$ export DELAY=3
+$ export HISTORY=history.txt
+$ python main.py
+
+```
