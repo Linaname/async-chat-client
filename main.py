@@ -1,31 +1,79 @@
 import asyncio
 import socket
+import argparse
+from aiofile import AIOFile
+from datetime import datetime
 
-HOST = 'minechat.dvmn.org'
-PORT = 5000
+DEFAULT_HOST = 'minechat.dvmn.org'
+DEFAULT_PORT = 5000
+DEFAULT_OUTPUT_FILE_PATH = 'history'
+DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES = 3
 
 
 async def retry_connection(host, port, delay):
     try:
-        return await asyncio.open_connection(host, port)
+        yield await asyncio.open_connection(host, port)
+        return
     except (ConnectionRefusedError, socket.gaierror):
-        print('Нет соединения. Повторная попытка.')
+        yield 'Нет соединения. Повторная попытка.\n'
     while True:
         try:
-            return await asyncio.open_connection(host, port)
+            yield await asyncio.open_connection(host, port)
+            return
         except (ConnectionRefusedError, socket.gaierror):
-            print(f'Нет соединения. Повторная попытка через {delay} сек.')
+            yield f'Нет соединения. Повторная попытка через {delay} сек.\n'
             await asyncio.sleep(delay)
 
 
-async def display_chat_messages(host, port, delay=3):
+async def read_chat_messages(host, port, delay):
     while True:
         try:
-            reader, writer = await retry_connection(host, port, delay)
+            async for connection_result in retry_connection(host, port, delay):
+                if isinstance(connection_result, str):
+                    yield connection_result
+                    continue
+                reader, writer = connection_result
             while True:
-                message = await reader.readline()
-                print(message.decode())
+                message_data = await reader.readline()
+                message_text = message_data.decode()
+                datetime_format = '%d.%m.%y %H:%M'
+                datetime_string = datetime.now().strftime(datetime_format)
+                formatted_message = f'[{datetime_string}] {message_text}'
+                yield formatted_message
         except ConnectionResetError:
-            print('Нет соединения. Повторная попытка.')
+            yield 'Нет соединения. Повторная попытка.\n'
 
-asyncio.run(display_chat_messages(HOST, PORT))
+
+async def save_messages_to_file(messages_async_generator, filepath):
+    async with AIOFile(filepath, 'a') as history_file:
+        async for message in messages_async_generator:
+            await history_file.write(message)
+
+
+async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host',
+                        default=DEFAULT_HOST,
+                        help='host name or ip address')
+    parser.add_argument('--port',
+                        type=int,
+                        default=DEFAULT_PORT,
+                        help='port')
+    parser.add_argument('--history',
+                        default=DEFAULT_OUTPUT_FILE_PATH,
+                        help='path to file with history')
+    parser.add_argument('--delay', '-d',
+                        type=float,
+                        default=DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES,
+                        help='delay between connect retries')
+    args = parser.parse_args()
+    host = args.host
+    port = args.port
+    history_file_path = args.history
+    delay = args.delay
+    messages_reader = read_chat_messages(host, port, delay)
+    await save_messages_to_file(messages_reader, history_file_path)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
