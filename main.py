@@ -62,7 +62,7 @@ async def main():
     parser.add_argument('--history',
                         default=DEFAULT_OUTPUT_FILE_PATH,
                         help='path to file with history')
-    parser.add_argument('--delay', '-d',
+    parser.add_argument('--delay',
                         type=float,
                         default=DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES,
                         help='delay between connect retries')
