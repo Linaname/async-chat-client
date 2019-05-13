@@ -54,18 +54,14 @@ async def save_messages_to_file(messages_async_generator, filepath):
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--host',
-                        default=DEFAULT_HOST,
                         help='host name or ip address')
     parser.add_argument('--port',
                         type=int,
-                        default=DEFAULT_PORT,
                         help='port')
     parser.add_argument('--history',
-                        default=DEFAULT_HISTORY_FILE_PATH,
                         help='path to file with history')
     parser.add_argument('--delay',
                         type=float,
-                        default=DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES,
                         help='delay between connect retries')
     args = parser.parse_args()
     host = args.host or os.getenv('HOST') or DEFAULT_HOST
