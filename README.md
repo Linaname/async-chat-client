@@ -11,8 +11,8 @@ $ pip istall -r requirements.txt
 ## How to use
 
 ```bash
-$ python main.py --help
-usage: main.py [-h] [--host HOST] [--port PORT] [--history HISTORY]
+$ python minechat_listener.py --help
+usage: minechat_listener.py [-h] [--host HOST] [--port PORT] [--history HISTORY]
                [--delay DELAY]
 
 optional arguments:
@@ -32,6 +32,6 @@ $ export HOST=minechat.dvmn.org
 $ export PORT=5000
 $ export DELAY=3
 $ export HISTORY=history.txt
-$ python main.py
+$ python minechat_listener.py
 
 ```
