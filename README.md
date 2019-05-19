@@ -5,10 +5,15 @@ Chat client for minechat.dvmn.org
 ## How to install
 
 ```bash
-$ pip istall -r requirements.txt
+$ pip install -r requirements.txt
 ```
+Python 3.7 is required.
 
 ## How to use
+
+### Read messages
+
+Read chat messages and save to file:
 
 ```bash
 $ python minechat_listener.py --help
@@ -33,5 +38,23 @@ $ export PORT=5000
 $ export DELAY=3
 $ export HISTORY=history.txt
 $ python minechat_listener.py
+```
 
+### Send message
+
+Autorise or register new user by nickname and send message to chat:
+
+```bash
+$ python minechat_sender.py -h
+usage: minechat_sender.py [-h] [--host HOST] [--port PORT]
+                          (--token TOKEN | --nickname NICKNAME) --message
+                          MESSAGE
+
+optional arguments:
+  -h, --help           show this help message and exit
+  --host HOST          host name or ip address
+  --port PORT          port
+  --token TOKEN        token
+  --nickname NICKNAME  nickname
+  --message MESSAGE    message text
 ```

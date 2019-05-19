@@ -1,10 +1,13 @@
 import asyncio
-import socket
 import argparse
 from aiofile import AIOFile
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
-import config
+
+DEFAULT_HOST = 'minechat.dvmn.org'
+DEFAULT_PORT = 5000
+DEFAULT_HISTORY_FILE_PATH = 'history'
+DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES = 3
 
 
 async def async_messages_generator(host, port, delay, tries_without_delay=2):
@@ -15,7 +18,7 @@ async def async_messages_generator(host, port, delay, tries_without_delay=2):
                 reader, writer = await asyncio.open_connection(host, port)
                 failed_tries_count = 0
                 break
-            except (ConnectionRefusedError, socket.gaierror):
+            except ConnectionRefusedError:
                 failed_tries_count += 1
                 if failed_tries_count < tries_without_delay:
                     yield 'Нет соединения. Повторная попытка.\n'
@@ -55,12 +58,12 @@ async def main():
                         type=float,
                         help='delay between connect retries')
     args = parser.parse_args()
-    host = args.host or os.getenv('HOST') or config.DEFAULT_HOST
-    port = args.port or os.getenv('PORT') or config.DEFAULT_LISTENER_PORT
+    host = args.host or os.getenv('HOST') or DEFAULT_HOST
+    port = args.port or os.getenv('PORT') or DEFAULT_PORT
     history_file_path = (args.history or os.getenv('HISTORY')
-                         or config.DEFAULT_HISTORY_FILE_PATH)
+                         or DEFAULT_HISTORY_FILE_PATH)
     delay = (args.delay or os.getenv('DELAY')
-             or config.DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES)
+             or DEFAULT_DELAY_BETWEEN_CONNECT_RETRIES)
     messages_generator = async_messages_generator(host, port, delay)
     await save_messages_to_file(messages_generator, history_file_path)
 
