@@ -84,7 +84,7 @@ async def main():
                         help='token')
     group.add_argument('--nickname',
                         type=str,
-                        help='nickname')
+                        help='nickname for registration of new account')
     parser.add_argument('--message',
                         type=str,
                         help='message text',
