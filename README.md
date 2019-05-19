@@ -42,7 +42,7 @@ $ python minechat_listener.py
 
 ### Send message
 
-Autorise or register new user by nickname and send message to chat:
+Authorize or register new user by nickname and send message to chat:
 
 ```bash
 $ python minechat_sender.py -h
