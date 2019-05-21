@@ -12,20 +12,22 @@ LISTENER_LOGGER = logging.getLogger('listener')
 SENDER_LOGGER = logging.getLogger('sender')
 
 
-async def write_and_log(writer, data, logger=SENDER_LOGGER):
-    logger.debug(data.decode())
-    writer.write(data)
+async def writeline_and_log(writer, string, logger=SENDER_LOGGER):
+    prepared_string = sanitize_message(string)
+    logger.debug(prepared_string)
+    writer.write(prepared_string.encode() + b'\n')
     await writer.drain()
 
 
 async def readline_and_log(reader, logger=LISTENER_LOGGER):
     received_data = await reader.readline()
-    logger.debug(received_data.decode())
+    recieved_string = received_data.decode()
+    logger.debug(recieved_string[:-1])
     return received_data
 
 
 def sanitize_message(message):
-    return re.sub(r'(^\n*)|(\n*(?=\n))|(\n*$)', '', message)
+    return re.sub(r'(^\n+)|(\n+(?=\n))|(\n+$)', '', message)
 
 
 def sanitize_nickname(nickname):
@@ -40,13 +42,12 @@ def validate_token(token):
 async def register(host, port, nickname):
     reader, writer = await asyncio.open_connection(host, port)
     greeting = await readline_and_log(reader)
-    await write_and_log(writer, b'\n')
+    await writeline_and_log(writer, '')
     nickname_request_message = await readline_and_log(reader)
-    bytes_to_send = nickname.encode() + b'\n'
-    await write_and_log(writer, bytes_to_send)
+    await writeline_and_log(writer, sanitize_nickname(nickname))
     answer_line_1 = await readline_and_log(reader)
     answer_line_2 = await readline_and_log(reader)
-    json_answer = json.loads(answer_line_1.decode())
+    json_answer = json.loads(answer_line_1)
     token = json_answer['account_hash']
     return reader, writer, token
 
@@ -55,19 +56,19 @@ async def authorize(host, port, token):
     validate_token(token)
     reader, writer = await asyncio.open_connection(host, port)
     greeting = await readline_and_log(reader)
-    bytes_to_send = token.encode() + b'\n'
-    await write_and_log(writer, bytes_to_send)
+    await writeline_and_log(writer, token)
     answer_line_1 = await readline_and_log(reader)
     answer_line_2 = await readline_and_log(reader)
-    json_answer = json.loads(answer_line_1.decode())
+    json_answer = json.loads(answer_line_1)
     if json_answer is None:
         raise ValueError('Invalid token')
     return reader, writer
 
 
 async def send_message(reader, writer, message):
-    bytes_to_send = sanitize_message(message).encode() + b'\n\n'
-    await write_and_log(writer, bytes_to_send)
+    message = sanitize_message(message)
+    await writeline_and_log(writer, message)
+    await writeline_and_log(writer, '')
     answer = await readline_and_log(reader)
 
 
@@ -104,16 +105,13 @@ async def main():
             exit('Нет соединения')
         except ValueError:
             exit('Неизвестный токен. Проверьте его или зарегистрируйте заново.')
-        await send_message(reader, writer, message)
-        return
     else:
         try:
             reader, writer, token = await register(host, port, nickname)
         except ConnectionRefusedError:
             exit('Нет соединения')
         print(f'Ваш токен: {token}')
-        await send_message(reader, writer, message)
-        return
+    await send_message(reader, writer, message)
 
 
 if __name__ == '__main__':
